@@ -18,6 +18,11 @@ class User:
     age:int | None = None
     height:float | None = None
 
+class MyName(TypedDict):
+    name: str
+    email: str
+    color:RGB |HSL | None
+    age:int | None = None
 
 
 # type User = dict[str, str | int | RGB | float | None]
