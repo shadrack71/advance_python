@@ -2,7 +2,7 @@ from functools import partial
 from uuid import uuid4, UUID
 
 from pydantic import BaseModel, ValidationError, Field, SecretStr, field_validator, model_validator, ValidationInfo, \
-    EmailStr
+    EmailStr,computed_field
 from datetime import datetime , UTC
 from typing import Optional, NewType, TypedDict, Literal,Annotated
 
@@ -20,7 +20,10 @@ class User(BaseModel):
     is_active:bool = True
     firstName:Optional[str] = None
     full_name:str | None = None
-
+    ### Computed Fields
+    first_name: str = ""
+    last_name: str = ""
+    follower_count: int = 0
 
     ### Username Validation
     @field_validator('username')
@@ -30,6 +33,17 @@ class User(BaseModel):
             raise ValueError('Username must be alphanumeric (underscores allowed)')
         return v.lower()
 
+    @computed_field
+    @property
+    def display_name(self) -> str:
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        return self.username
+
+    @computed_field
+    @property
+    def is_influencer(self) -> bool:
+        return self.follower_count >= 10000
 
 ### Model Validator
 class UserRegistration(BaseModel):
@@ -53,6 +67,8 @@ try:
 except ValidationError as e:
     print(e)
 
+
+
 class Blog (BaseModel):
     title:Annotated[str,Field(min_length=3 , max_length=200)]
     content:Annotated[str,Field(min_length=3 )]
@@ -64,7 +80,41 @@ class Blog (BaseModel):
     status:Literal["draft","published","archived"]
     # slug:Annotated[str,Field(pattern=r"^[a-z0-9-]+$")]
 
+### Comment Model
+class Comment(BaseModel):
+    content: str
+    author_email: EmailStr
+    likes: int = 0
 
+
+### BlogPost Dictionary
+post_data = {
+    "title": "Understanding Pydantic Models",
+    "content": "Pydantic makes data validation easy and intuitive...",
+    "slug": "understanding-pydantic",
+    "author": {
+        "username": "coreyms",
+        "email": "CoreyMSchafer@gmail.com",
+        "age": 39,
+        "password": "secret123",
+    },
+    "comments": [
+        {
+            "content": "I think I understand nested models now!",
+            "author_email": "student@example.com",
+            "likes": 25,
+        },
+        {
+            "content": "Can you cover FastAPI next?",
+            "author_email": "viewer@example.com",
+            "likes": 15,
+        },
+    ],
+}
+
+post = Blog(**post_data)
+
+print(post.model_dump_json(indent=2))
 post = Blog(
     title="blog1",
     content="name",
@@ -83,6 +133,9 @@ user1 = User(
         name='user1',
         age=16,
         password='password',
+        first_name='shadrack',
+        last_name='kinsimba7',
+        follower_count=876554
     )
 
 
