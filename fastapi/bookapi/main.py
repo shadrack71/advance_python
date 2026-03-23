@@ -1,12 +1,67 @@
-from typing import Optional
 
-from fastapi import  FastAPI,Header
+from typing import Optional, List
+
+from fastapi import  FastAPI,Header,status ,HTTPException
 from pydantic import BaseModel
 
 app = FastAPI()
 
-
-
+books = [
+    {
+        "id": 1,
+        "title": "Think Python",
+        "author": "Allen B. Downey",
+        "publisher": "O'Reilly Media",
+        "published_date": "2021-01-01",
+        "page_count": 1234,
+        "language": "English",
+    },
+    {
+        "id": 2,
+        "title": "Django By Example",
+        "author": "Antonio Mele",
+        "publisher": "Packt Publishing Ltd",
+        "published_date": "2022-01-19",
+        "page_count": 1023,
+        "language": "English",
+    },
+    {
+        "id": 3,
+        "title": "The web socket handbook",
+        "author": "Alex Diaconu",
+        "publisher": "Xinyu Wang",
+        "published_date": "2021-01-01",
+        "page_count": 3677,
+        "language": "English",
+    },
+    {
+        "id": 4,
+        "title": "Head first Javascript",
+        "author": "Hellen Smith",
+        "publisher": "Oreilly Media",
+        "published_date": "2021-01-01",
+        "page_count": 540,
+        "language": "English",
+    },
+    {
+        "id": 5,
+        "title": "Algorithms and Data Structures In Python",
+        "author": "Kent Lee",
+        "publisher": "Springer, Inc",
+        "published_date": "2021-01-01",
+        "page_count": 9282,
+        "language": "English",
+    },
+    {
+        "id": 6,
+        "title": "Head First HTML5 Programming",
+        "author": "Eric T Freeman",
+        "publisher": "O'Reilly Media",
+        "published_date": "2011-21-01",
+        "page_count": 3006,
+        "language": "English",
+    },
+]
 @app.get('/')
 async def index():
     return  { 'name':'shadrack'}
@@ -35,3 +90,40 @@ async  def get_header(accept:str = Header(None),
     request_header = {'accept':accept,'content-type':content_type,'user_agent':user_agent,'host':host}
 
     return request_header
+
+
+class GetBook(BaseModel):
+    id:int
+    title :str
+    author :str
+    publisher:str
+    published_date:str
+    page_count:int
+    language:str
+
+@app.get('/get_books',response_model=List[GetBook])
+async  def get_all_book()->list:
+    return  books
+
+@app.post('/create_books', status_code=status.HTTP_201_CREATED)
+async  def create_book(book_data:GetBook)->dict:
+    new_books = book_data.model_dump()
+    books.append(new_books)
+    return  new_books
+
+
+@app.get('/get_book/{book_id}')
+async  def get_all_book(book_id:int):
+    for book in books:
+        if book['id'] == book_id:
+            return  book
+    return HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail='Not found')
+
+
+@app.patch('/update_books/{book_id}')
+async  def update_all_book(book_id)->dict:
+    pass
+
+@app.delete('/delete_books')
+async  def delete_all_book(book_id)->dict:
+    pass
