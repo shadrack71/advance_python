@@ -22,7 +22,7 @@ async def main():
 
     # Gather Tasks
     tasks = [asyncio.create_task(fetch_data(i)) for i in range(1, 3)]
-    results = await asyncio.gather(*tasks)
+    results = await asyncio.gather(*tasks ,  return_exceptions=True)
     print(f"Task Results: {results}")
 
     # Task Group

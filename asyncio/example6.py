@@ -6,6 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 def fetch_data(param):
     print(f"Do something with {param}...", flush=True)
     time.sleep(param)
+
     print(f"Done with {param}", flush=True)
     return f"Result of {param}"
 
