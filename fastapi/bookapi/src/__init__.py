@@ -15,8 +15,6 @@ async def life_span(app:FastAPI):
 
     print(f" server is stoping")
 
-
-
 version = 'v1'
 app = FastAPI(
     title='bookly',

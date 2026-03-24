@@ -1,19 +1,20 @@
-from sqlmodel import create_engine, text
-from sqlalchemy.ext.asyncio import AsyncEngine
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy import text
+
 from ..config import Config
 
-engine = AsyncEngine(create_engine(
-    url=Config.DATABASE_URL,
-    echo=True
-))
+
+engine = create_async_engine(
+    Config.DATABASE_URL,
+    echo=True,
+    connect_args={"ssl": True}
+)
 
 
 async def initdb():
-    """create a connection to our db"""
+    """Test database connection"""
 
     async with engine.begin() as conn:
-        statement = text("select 'Hello World'")
+        result = await conn.execute(text("SELECT 'Hello World'"))
 
-        result = await conn.execute(statement)
-
-        print(result)
+        print(result.scalar())  # prints: Hello World
