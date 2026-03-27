@@ -8,7 +8,6 @@ from .service import BookService
 
 book_router = APIRouter()
 
-
 @book_router.get('/test')
 async def index():
     return {'name': 'shadrack'}
@@ -40,9 +39,7 @@ async def get_header(accept: str = Header(None),
 
 
 #  Creating Simple CRUD
-
 book_service = BookService()
-
 
 @book_router.get('/', response_model=List[GetBook])
 async def get_all_book(session: AsyncSession = Depends(get_session)) -> dict:

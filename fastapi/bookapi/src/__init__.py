@@ -8,12 +8,12 @@ from contextlib import asynccontextmanager
 
 @asynccontextmanager
 async def life_span(app:FastAPI):
-    print(f" server is starting")
+    print(f"server is starting")
     await initdb()
 
     yield
 
-    print(f" server is stoping")
+    print(f"server is stoping")
 
 version = 'v1'
 app = FastAPI(
