@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from fastapi import  APIRouter ,Depends,status,HTTPException
 from fastapi.responses import JSONResponse
@@ -7,6 +7,7 @@ from .schemas import UserCreateModel, UserModel, UserLoginModel
 from .services import UserService
 from .utils import create_access_token,decode_token,password_verify
 from sqlmodel.ext.asyncio.session import AsyncSession
+from  .dependencies import RefreshTokenBearer
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -56,4 +57,13 @@ async def user_login(user_login_data:UserLoginModel,session:AsyncSession = Depen
     else:
         return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user not found')
 
-    pass
+@auth_router.get('/refresh_token')
+async  def refresh_token(token_details:dict = Depends(RefreshTokenBearer())):
+    expiry_timestamp = token_details["exp"]
+    if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
+        new_access_token = create_access_token(user_data=token_details['user'])
+        return  JSONResponse(content={"access_token":new_access_token})
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST , detail="Invalid Or expired token"
+    )
+
