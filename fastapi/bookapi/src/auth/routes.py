@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from fastapi import  APIRouter ,Depends,status,HTTPException
 from fastapi.responses import JSONResponse
-
 from ..db.main import get_session
 from .schemas import UserCreateModel, UserModel, UserLoginModel
 from .services import UserService

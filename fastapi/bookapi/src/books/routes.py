@@ -6,6 +6,8 @@ from ..db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import BookService
 
+from ..auth.dependencies import  AccessTokenBearer
+
 book_router = APIRouter()
 
 @book_router.get('/test')
@@ -40,21 +42,23 @@ async def get_header(accept: str = Header(None),
 
 #  Creating Simple CRUD
 book_service = BookService()
+access_token_bearer = AccessTokenBearer()
 
 @book_router.get('/', response_model=List[GetBook])
-async def get_all_book(session: AsyncSession = Depends(get_session)) -> dict:
+async def get_all_book(session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)) -> dict:
+    print(user_details)
     books = await book_service.get_all_books(session)
     return books
 
 
 @book_router.post('/', status_code=status.HTTP_201_CREATED, response_model=BookCreateModel)
-async def create_book(book_data: BookCreateModel, session: AsyncSession = Depends(get_session)) -> dict:
+async def create_book(book_data: BookCreateModel, session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)) -> dict:
     new_book = await book_service.create_books(book_data, session)
     return new_book
 
 
 @book_router.get('/{book_uid}', response_model=GetBook)
-async def get_book(book_uid: str, session: AsyncSession = Depends(get_session)):
+async def get_book(book_uid: str, session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)):
     book = await book_service.get_book(book_uid, session)
     if book:
         return book
@@ -64,8 +68,8 @@ async def get_book(book_uid: str, session: AsyncSession = Depends(get_session)):
 
 @book_router.patch('/{book_uid}',status_code=status.HTTP_200_OK,response_model=BookUpdateModel)
 async def update_book(book_uid: str, book_update_data: BookUpdateModel,
-                      session: AsyncSession = Depends(get_session)) -> dict:
-    update_book_data = await book_service.update_books(book_uid, book_update_data, session)
+                      session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)) -> dict:
+    update_book_data = await book_service.update_books(book_uid, book_update_data,session)
     if update_book_data:
         return update_book_data
     else:
@@ -73,7 +77,7 @@ async def update_book(book_uid: str, book_update_data: BookUpdateModel,
 
 
 @book_router.delete('/{book_uid}', status_code=status.HTTP_204_NO_CONTENT)
-async def delete_all_book(book_uid: str, session: AsyncSession = Depends(get_session)):
+async def delete_all_book(book_uid: str, session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)):
     delete_book = await book_service.delete_books(book_uid, session)
     if delete_book:
         return delete_book
