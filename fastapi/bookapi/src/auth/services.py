@@ -13,8 +13,9 @@ class UserService:
         return user
 
     async def user_exist(self,email:str,session:AsyncSession):
-        user = self.get_user_email(email,session)
-        return False if user is not None else True
+        user = await self.get_user_email(email,session)
+        return True if user is not None else False
+
 
     async def create_user(self,user_data:UserCreateModel,session:AsyncSession):
         user_data_dict = user_data.model_dump()

@@ -2,7 +2,8 @@ from sqlalchemy import func
 from sqlmodel import SQLModel, Field, Column
 import sqlalchemy.dialects.postgresql as pg
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
+
 
 class User(SQLModel, table=True):
     __tablename__ = "user_accounts"
@@ -24,7 +25,10 @@ class User(SQLModel, table=True):
     is_verified: bool = Field(default=False)
     email: str
     password_hash: str = Field(exclude=True)
-    created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=func.now))
+    created_at: datetime = Field(
+        sa_column=Column(pg.TIMESTAMP),
+        default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
+    )
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"
