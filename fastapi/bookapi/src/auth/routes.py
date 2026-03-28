@@ -8,6 +8,7 @@ from .services import UserService
 from .utils import create_access_token,decode_token,password_verify
 from sqlmodel.ext.asyncio.session import AsyncSession
 from  .dependencies import RefreshTokenBearer
+from ..db.redis import add_jwi_to_blocklist
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -66,4 +67,16 @@ async  def refresh_token(token_details:dict = Depends(RefreshTokenBearer())):
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST , detail="Invalid Or expired token"
     )
+
+@auth_router.get('/logout')
+async def revoke_token(token_details:dict = Depends(RefreshTokenBearer())):
+    jti =token_details['jti']
+    await add_jwi_to_blocklist(jti)
+    return  JSONResponse(
+        content={
+            "message":"Logged Our Successes "
+        },
+        status_code=status.HTTP_200_OK
+    )
+
 
