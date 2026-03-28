@@ -1,5 +1,5 @@
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Request, HTTPException,status
+from fastapi import Request, HTTPException, status, Depends
 from .utils import  decode_token
 
 from ..db.redis import add_jwi_to_blocklist ,token_in_blocklist
@@ -37,3 +37,8 @@ class RefreshTokenBearer(TokenBearer):
     def verify_token_data(self,token_data:dict) -> None:
         if token_data and not token_data['refresh']:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Provide Refresh Valid token')
+
+
+
+def get_current_user(token_details:dict = Depends(AccessTokenBearer())):
+    user_email = token_details['user']['email']
