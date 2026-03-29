@@ -1,12 +1,18 @@
+from typing import Optional
+from pydantic import ConfigDict
 from sqlalchemy import func
-from sqlmodel import SQLModel, Field, Column
+from sqlmodel import SQLModel, Field, Column, Relationship
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 from datetime import datetime, timezone
+from ..books import models
 
 
 class User(SQLModel, table=True):
+    model_config = ConfigDict(from_attributes=True)
+
     __tablename__ = "user_accounts"
+
 
     uid: uuid.UUID = Field(
         sa_column=Column(
@@ -32,6 +38,7 @@ class User(SQLModel, table=True):
         sa_column=Column(pg.TIMESTAMP),
         default_factory=lambda: datetime.now(timezone.utc).replace(tzinfo=None)
     )
+    books: Optional[list["models.Book"]] = Relationship(back_populates="user_accounts",sa_relationship_kwargs={"lazy":"selectin","uselist": True})
 
     def __repr__(self) -> str:
         return f"<User {self.username}>"

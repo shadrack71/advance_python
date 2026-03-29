@@ -1,7 +1,10 @@
 from datetime import datetime
 from typing import Optional
 
-from sqlmodel import SQLModel, Field, Column
+from .data import books
+from ..auth import models
+
+from sqlmodel import SQLModel, Field, Column ,Relationship
 import sqlalchemy.dialects.postgresql as pg
 import uuid
 
@@ -27,6 +30,7 @@ class Book(SQLModel , table=True):
     user_uid:Optional[uuid.UUID] = Field(default=None,foreign_key="user_accounts.uid")
     created_at: datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
     updated_at:datetime = Field(sa_column=Column(pg.TIMESTAMP, default=datetime.now))
+    user_accounts:Optional["models.User"] = Relationship(back_populates="books")
 
     def __repr__(self) -> str:
         return f"<Book {self.title}>"

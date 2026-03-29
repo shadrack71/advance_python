@@ -10,6 +10,7 @@ class UserService:
         statement = select(User).where(User.email == email)
         result = await  session.exec(statement)
         user = result.first()
+        print(user)
         return user
 
     async def user_exist(self,email:str,session:AsyncSession):
