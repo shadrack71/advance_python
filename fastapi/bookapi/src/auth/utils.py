@@ -19,7 +19,6 @@ from argon2.exceptions import VerifyMismatchError
 import uuid
 import logging
 
-
 from ..config import Config
 
 # Initialize the hasher once

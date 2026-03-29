@@ -7,11 +7,12 @@ from .schemas import UserCreateModel, UserModel, UserLoginModel
 from .services import UserService
 from .utils import create_access_token,decode_token,password_verify
 from sqlmodel.ext.asyncio.session import AsyncSession
-from  .dependencies import RefreshTokenBearer
+from  .dependencies import RefreshTokenBearer , get_current_user ,RoleChecker
 from ..db.redis import add_jwi_to_blocklist
 
 auth_router = APIRouter()
 user_service = UserService()
+role_checker = RoleChecker(['admin','user'])
 
 REFRESH_TOKEN_EXPIRY = 2
 
@@ -37,16 +38,17 @@ async def user_login(user_login_data:UserLoginModel,session:AsyncSession = Depen
         if password_match:
             user_payload = {
                 'email':user_data.email,
-                'user_uid':str(user_data.uid)
+                'user_uid':str(user_data.uid),
+                'role':user_data.role
             }
-            refresh_token = create_access_token(user_payload,refresh=True, expiry=timedelta(days=REFRESH_TOKEN_EXPIRY))
+            refresh_token_ = create_access_token(user_payload,refresh=True, expiry=timedelta(days=REFRESH_TOKEN_EXPIRY))
             access_token = create_access_token(user_payload)
 
             return  JSONResponse(
                 content={
                     "message":"login Successful",
                     "access_token":access_token,
-                    "refresh_token":refresh_token,
+                    "refresh_token":refresh_token_,
                     "user":{
                         "email":user_data.email,
                         "uid":str(user_data.uid)
@@ -68,10 +70,14 @@ async  def refresh_token(token_details:dict = Depends(RefreshTokenBearer())):
         status_code=status.HTTP_400_BAD_REQUEST , detail="Invalid Or expired token"
     )
 
+@auth_router.get('/me')
+async  def get_current_user(user = Depends(get_current_user),_:bool = Depends(role_checker)):
+    return user
+
 @auth_router.get('/logout')
 async def revoke_token(token_details:dict = Depends(RefreshTokenBearer())):
     jti =token_details['jti']
-    await add_jwi_to_blocklist(jti)
+    # await add_jwi_to_blocklist(jti)
     return  JSONResponse(
         content={
             "message":"Logged Out Successfully "
