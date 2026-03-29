@@ -3,7 +3,7 @@ from typing import Optional, List
 
 from fastapi.params import Depends
 
-from .schemas import GetBook, BookUpdateModel, BookCreateModel
+from .schemas import GetBook, BookUpdateModel, BookCreateModel ,BookDetailModel
 # from  .data import  books
 from ..db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -44,18 +44,17 @@ async def get_header(accept: str = Header(None),
 
     return request_header
 
-
 #  Creating Simple CRUD
 book_service = BookService()
 access_token_bearer = AccessTokenBearer()
 
-@book_router.get('/', response_model=List[GetBook],dependencies=[role_checker])
+@book_router.get('/', response_model=List[BookDetailModel],dependencies=[role_checker])
 async def get_all_book(session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)) -> dict:
     # print(user_details)
     books = await book_service.get_all_books(session)
     return books
 
-@book_router.get('/user/{user_id}', response_model=List[GetBook],dependencies=[role_checker])
+@book_router.get('/user/{user_id}', response_model=List[BookDetailModel],dependencies=[role_checker])
 async def get_user_books(user_id:str,session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)) -> dict:
     books = await book_service.get_users_books(user_id,session)
     return books
@@ -67,7 +66,7 @@ async def create_book(book_data: BookCreateModel, session: AsyncSession = Depend
     return new_book
 
 
-@book_router.get('/{book_uid}', response_model=GetBook,dependencies=[role_checker])
+@book_router.get('/{book_uid}', response_model=BookDetailModel,dependencies=[role_checker])
 async def get_book(book_uid: str, session: AsyncSession = Depends(get_session),user_details=Depends(access_token_bearer)):
     book = await book_service.get_book(book_uid, session)
     if book:

@@ -5,7 +5,7 @@ from fastapi import Request, HTTPException, status, Depends
 from .utils import  decode_token
 from sqlmodel.ext.asyncio.session import AsyncSession
 from ..db.main import get_session
-from .models import  User
+from ..db.models import  User
 
 # from ..db.redis import add_jwi_to_blocklist ,token_in_blocklist
 from .services import  UserService
