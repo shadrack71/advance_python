@@ -9,6 +9,9 @@ from .utils import create_access_token,decode_token,password_verify
 from sqlmodel.ext.asyncio.session import AsyncSession
 from  .dependencies import RefreshTokenBearer , get_current_user ,RoleChecker
 from ..db.redis import add_jwi_to_blocklist
+from ..errors import (InvalidToken ,RevokedToken,AccessTokenRequired,RefreshTokenRequired,
+                      UserAlreadyExists,InvalidCredentials,InsufficientPermission,
+                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound)
 
 auth_router = APIRouter()
 user_service = UserService()
@@ -22,7 +25,8 @@ async def  create_user_account(user_data:UserCreateModel,session:AsyncSession = 
     user_email = user_data.email
     user_exist = await user_service.user_exist(user_email,session)
     if user_exist:
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user with email exist')
+        raise UserAlreadyExists()
+        # return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user with email exist')
 
     new_user = await user_service.create_user(user_data, session)
     return new_user
@@ -56,9 +60,11 @@ async def user_login(user_login_data:UserLoginModel,session:AsyncSession = Depen
                 }
             )
         else:
-            return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Invalid password and email')
+            raise InvalidCredentials()
+            # return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='Invalid password and email')
     else:
-        return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user not found')
+        raise UserNotFound()
+        # return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user not found')
 
 @auth_router.get('/refresh_token')
 async  def refresh_token(token_details:dict = Depends(RefreshTokenBearer())):
@@ -66,9 +72,10 @@ async  def refresh_token(token_details:dict = Depends(RefreshTokenBearer())):
     if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
         new_access_token = create_access_token(user_data=token_details['user'])
         return  JSONResponse(content={"access_token":new_access_token})
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST , detail="Invalid Or expired token"
-    )
+    raise InvalidToken()
+    # raise HTTPException(
+    #     status_code=status.HTTP_400_BAD_REQUEST , detail="Invalid Or expired token"
+    # )
 
 @auth_router.get('/me',response_model=UserBookModel)
 async  def get_current_user(user = Depends(get_current_user),_:bool = Depends(role_checker)):

@@ -11,6 +11,11 @@ from .service import BookService
 
 from ..auth.dependencies import  AccessTokenBearer ,RoleChecker
 
+from ..errors import (InvalidToken ,RevokedToken,AccessTokenRequired,RefreshTokenRequired,
+                      UserAlreadyExists,InvalidCredentials,InsufficientPermission,
+                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound)
+
+
 book_router = APIRouter()
 
 role_checker = Depends(RoleChecker(['admin','user']))
@@ -72,7 +77,8 @@ async def get_book(book_uid: str, session: AsyncSession = Depends(get_session),u
     if book:
         return book
     else:
-        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Book Not found')
+        raise  BookNotFound()
+        # return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Book Not found')
 
 @book_router.patch('/{book_uid}',status_code=status.HTTP_200_OK,response_model=BookUpdateModel,dependencies=[role_checker])
 async def update_book(book_uid: str, book_update_data: BookUpdateModel,
@@ -81,7 +87,8 @@ async def update_book(book_uid: str, book_update_data: BookUpdateModel,
     if update_book_data:
         return update_book_data
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+        raise BookNotFound()
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
 
 @book_router.delete('/{book_uid}', status_code=status.HTTP_204_NO_CONTENT,dependencies=[role_checker])
@@ -90,4 +97,5 @@ async def delete_all_book(book_uid: str, session: AsyncSession = Depends(get_ses
     if delete_book:
         return delete_book
     else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
+        raise BookNotFound()
+        # raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")

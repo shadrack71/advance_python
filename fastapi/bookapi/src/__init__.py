@@ -8,6 +8,13 @@ from .db.main import initdb
 
 from contextlib import asynccontextmanager
 
+from .errors import (InvalidToken ,RevokedToken,AccessTokenRequired,
+                     RefreshTokenRequired,
+                      UserAlreadyExists,InvalidCredentials,InsufficientPermission,
+                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound,
+                     create_exception_handler,register_error_handlers
+                     )
+
 @asynccontextmanager
 async def life_span(app:FastAPI):
     print(f"server is starting")
@@ -24,6 +31,7 @@ app = FastAPI(
     version=version
     # lifespan=life_span
 )
+register_error_handlers(app)
 
 app.include_router(book_router,prefix=f"/api/{version}/books",tags=['books'])
 app.include_router(auth_router,prefix=f"/api/{version}/auth",tags=['auth'])
