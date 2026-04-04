@@ -9,7 +9,7 @@ from ..config import Config
 
 engine = create_async_engine(
     Config.DATABASE_URL,
-    echo=True,
+    # echo=True,
     connect_args={"ssl": True}
 )
 

@@ -8,18 +8,12 @@ from .db.main import initdb
 
 from contextlib import asynccontextmanager
 
-from .errors import (InvalidToken ,RevokedToken,AccessTokenRequired,
-                     RefreshTokenRequired,
-                      UserAlreadyExists,InvalidCredentials,InsufficientPermission,
-                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound,
-                     create_exception_handler,register_error_handlers
-                     )
+from .errors import (register_error_handlers)
 from .middleware import register_middleware
 @asynccontextmanager
 async def life_span(app:FastAPI):
     print(f"server is starting")
     await initdb()
-
     yield
 
     print(f"server is stoping")
