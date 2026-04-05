@@ -11,6 +11,9 @@ class BooklyException(Exception):
 class InvalidToken(BooklyException):
     """User has provided an invalid or expired token"""
     pass
+class PasswordMismatch(BooklyException):
+    """User has provided  mismatch password"""
+    pass
 
 class RevokedToken(BooklyException):
     """User has provided a token that has been revoked"""
@@ -73,6 +76,16 @@ def register_error_handlers(app: FastAPI):
             status_code=status.HTTP_403_FORBIDDEN,
             initial_detail={
                 "message": "User with email already exists",
+                "error_code": "user_exists",
+            },
+        ),
+    )
+    app.add_exception_handler(
+        PasswordMismatch,
+        create_exception_handler(
+            status_code=status.HTTP_403_FORBIDDEN,
+            initial_detail={
+                "message": "mismatch passwords",
                 "error_code": "user_exists",
             },
         ),

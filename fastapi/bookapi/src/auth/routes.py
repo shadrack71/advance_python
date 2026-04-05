@@ -1,19 +1,20 @@
 from datetime import timedelta, datetime
 
+from argon2 import hash_password
 from fastapi import  APIRouter ,Depends,status,HTTPException
 from fastapi.responses import JSONResponse
 
 from ..config import Config
 from ..db.main import get_session
-from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBookModel,EmailModel
+from .schemas import UserCreateModel, UserModel, UserLoginModel, UserBookModel,EmailModel,PasswordResetModel,PasswordResetConfirmModel
 from .services import UserService
-from .utils import create_access_token,decode_token,password_verify ,create_url_safe_token,decode_url_safe_token
+from .utils import create_access_token,decode_token,password_verify ,create_url_safe_token,decode_url_safe_token,generate_password_hash
 from sqlmodel.ext.asyncio.session import AsyncSession
 from  .dependencies import RefreshTokenBearer , get_current_user ,RoleChecker
 from ..db.redis import add_jwi_to_blocklist
 from ..errors import (InvalidToken ,RevokedToken,AccessTokenRequired,RefreshTokenRequired,
                       UserAlreadyExists,InvalidCredentials,InsufficientPermission,
-                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound)
+                      BookNotFound,TagNotFound,TagAlreadyExists,UserNotFound ,PasswordMismatch)
 
 from ..mail import mail,create_email
 
@@ -63,7 +64,7 @@ async def  create_user_account(user_data:UserCreateModel,session:AsyncSession = 
     }
     # return new_user
 
-@auth_router.get("/verify/{token}")
+@auth_router.get('/verify/{token}')
 async def verify_user_account(token: str, session: AsyncSession = Depends(get_session)):
 
     token_data = decode_url_safe_token(token)
@@ -84,7 +85,7 @@ async def verify_user_account(token: str, session: AsyncSession = Depends(get_se
         )
 
     return JSONResponse(
-        content={"message": "Error occured during verification"},
+        content={"message": "Error occurred during verification"},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
     )
 
@@ -150,5 +151,59 @@ async def revoke_token(token_details:dict = Depends(RefreshTokenBearer())):
         status_code=status.HTTP_200_OK
     )
 
+@auth_router.post('/password-reset')
+async def password_reset(email_data:PasswordResetModel , session:AsyncSession = Depends(get_session)):
+    user_email = email_data.email
+    user_exist = await user_service.user_exist(user_email, session)
+    if not user_exist:
+        raise UserNotFound()
+        # return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail='user with email exist')
+    token = create_url_safe_token({"email": user_email})
+
+    link = f"http://{Config.DOMAIN}/api/v1/auth/password-reset-confirm/{token}"
+
+    html_message = f"""
+            <h1>Verify your Email</h1>
+            <p>Please click this <a href="{link}">link</a>  reset your password</p>
+            """
+
+    message = create_email(
+        recipients=[user_email], subject="Reset your password", body=html_message
+    )
+
+    await mail.send_message(message)
+
+    return  JSONResponse(
+        content={"message":"Please check your email for instruction to reset your password"},status_code=status.HTTP_200_OK
+    )
+
+@auth_router.get('/password-reset-confirm/{token}')
+async def password_reset_confirm(token:str,update_data:PasswordResetConfirmModel,session: AsyncSession = Depends(get_session)):
+    token_data = decode_url_safe_token(token)
+    updated_data = update_data.model_dump()
+
+    user_email = token_data.get("email")
+
+    if user_email:
+        user = await user_service.get_user_email(user_email, session)
+
+        if not user:
+            raise UserNotFound()
+
+        if updated_data['new_password'] != updated_data['confirm_password']:
+            raise PasswordMismatch()
+        hash_new_password = generate_password_hash(updated_data['new_password'])
+
+        await user_service.update_user(user, {"password_hash":hash_new_password}, session)
+
+        return JSONResponse(
+            content={"message": "Password reset successfully"},
+            status_code=status.HTTP_200_OK,
+        )
+
+    return JSONResponse(
+        content={"message": "Error occurred during verification"},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+    )
 
 

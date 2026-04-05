@@ -41,7 +41,6 @@ class BookService:
             for k ,v in update_book.items():
                 setattr(book_to_update,k,v)
             await session.commit()
-
             return  book_to_update
         else:
             return  None
