@@ -34,3 +34,7 @@ class UserLoginModel(BaseModel):
     username: str = Field(max_length=8)
     email: str = Field(max_length=40)
     password: str
+
+class EmailModel(BaseModel):
+    addresses:List[str]
+

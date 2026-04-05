@@ -1,4 +1,5 @@
-from fastapi_mail import FastMail , ConnectionConfig
+from typing import List
+from fastapi_mail import FastMail, ConnectionConfig, MessageSchema, MessageType
 from .config import Config
 from pathlib import Path
 
@@ -22,3 +23,12 @@ mail_config = ConnectionConfig(
 
 
 # create the object to send emails with the config
+
+mail = FastMail(
+    config=mail_config
+)
+
+
+def create_email(recipients:List[str],subject:str,body:str)->MessageSchema:
+    message = MessageSchema(recipients=recipients,subject=subject,body=body,subtype=MessageType.html)
+    return message
