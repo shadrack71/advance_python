@@ -83,7 +83,7 @@ def register_error_handlers(app: FastAPI):
     app.add_exception_handler(
         PasswordMismatch,
         create_exception_handler(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_400_BAD_REQUEST,
             initial_detail={
                 "message": "mismatch passwords",
                 "error_code": "user_exists",

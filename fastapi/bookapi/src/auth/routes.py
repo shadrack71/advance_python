@@ -1,7 +1,7 @@
 from datetime import timedelta, datetime
 
 from argon2 import hash_password
-from fastapi import  APIRouter ,Depends,status,HTTPException
+from fastapi import  APIRouter ,Depends,status,HTTPException , BackgroundTasks
 from fastapi.responses import JSONResponse
 
 from ..config import Config
@@ -34,7 +34,7 @@ async def send_email(emails:EmailModel):
     return {"message":"email sent successfully"}
 
 @auth_router.post('/signup', response_model=UserModel,status_code=status.HTTP_201_CREATED)
-async def  create_user_account(user_data:UserCreateModel,session:AsyncSession = Depends(get_session)):
+async def  create_user_account(user_data:UserCreateModel,bg_tasks:BackgroundTasks,session:AsyncSession = Depends(get_session)):
 
     user_email = user_data.email
     user_exist = await user_service.user_exist(user_email,session)
@@ -55,8 +55,8 @@ async def  create_user_account(user_data:UserCreateModel,session:AsyncSession = 
     message = create_email(
         recipients=[user_email], subject="Verify your email", body=html_message
     )
-
-    await mail.send_message(message)
+    bg_tasks.add_task(mail.send_message,message)
+    # await mail.send_message(message)
 
     return {
         "message": "Account Created! Check email to verify your account",
@@ -202,7 +202,7 @@ async def password_reset_confirm(token:str,update_data:PasswordResetConfirmModel
         )
 
     return JSONResponse(
-        content={"message": "Error occurred during verification"},
+        content={"message": "Error occurred during password reset"},
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
     )
 
